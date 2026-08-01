@@ -1,0 +1,295 @@
+DB
+AI/MCP
+BÀI THỰC HÀNH
+MINI LAB
+DATABASE TESTING CƠ BẢN
+& TÍCH HỢP AI/MCP
+KiểmthửPhầnmềm/SoftwareQualityAssurance
+Mônhọc
+KiểmthửCơsởdữliệuHệthốngE-Commerce·Phiênbảnrút
+Chủđề gọn
+Node.js·PostgreSQL·Jest·Supertest
+Technical
+MCPDatabaseServer·SchemaAnalysis·EXPLAIN ANALYZE
+CôngcụAI
+db-tests.test.js·performance.sql·REPORT.md
+Sảnphẩm
+MINIEXERCISE PostgreSQLEdition
+
+--- PAGE BREAK ---
+
+MINILAB·DATABASETESTING POSTGRESQL+AI/MCP
+Mục lục
+1 Thôngtinchung 1
+1.1 Technicalvàsảnphẩmnộp . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 1
+2 Cấutrúccơsởdữliệuvàđốitượngkiểmthử 1
+2.1 Cácđốitượngchứalỗilogiccầnpháthiện . . . . . . . . . . . . . . . . . . . . . . . 2
+3 Quytrìnhthựchiện 2
+3.1 Bước1—PhântíchschemaquaMCPDatabaseServer . . . . . . . . . . . . . . . 2
+3.2 Bước2—Khởitạodữliệukiểmthửtốithiểu . . . . . . . . . . . . . . . . . . . . . 3
+3.3 Bước3—KiểmthửtầngDatabase . . . . . . . . . . . . . . . . . . . . . . . . . . . 3
+3.4 Bước4—KiểmthửAPIvàbảomật . . . . . . . . . . . . . . . . . . . . . . . . . . . 4
+3.5 Bước5—PhântíchhiệunăngvớiEXPLAINANALYZE . . . . . . . . . . . . . . . . . 4
+4 Bảngtổnghợp7khíacạnhkiểmthử 5
+5 CấutrúcbáocáoREPORT.md 5
+6 Tiêuchíđánhgiávàtrọngsố 6
+7 Checklisttrướckhinộp 6
+i
+
+--- PAGE BREAK ---
+
+MINILAB·DATABASETESTING POSTGRESQL+AI/MCP
+1. Thông tin chung
+MinilabtậptrungvàokiểmthửcơsởdữliệuPostgreSQLchohệthốngE-Commercethugọn.
+Sinhviênsẽkiểmthửtrựctiếptầngdatabase,kiểmthửtíchhợpAPI,phântíchhiệunăngvàsử
+dụngAIAgentthôngquaMCPDatabaseServerđểhỗtrợkhámpháschema.
+Mụctiêubàithựchành
+Kiểmtraconstraints,function,trigger,storedprocedure,transaction,APInghiệpvụ,SQL
+Injection,quyềntruycậpvàkếhoạchthựcthitruyvấn;đồngthờighinhậnkếtquảAI/MCP
+thànhbằngchứngcóthểtruyvếtvàkiểmchứng.
+1.1. Technical và sản phẩm nộp
+Thànhphần/Tệp Vaitrò/Nộidung
+Node.js,Jest,Supertest ChạytestsuitevàkiểmthửtíchhợpAPI.
+PostgreSQL Chứaschemavàcácđốitượngdatabasecầnkiểmthử.
+MCPDatabaseServer Phântíchschemavàhỗtrợđọckếhoạchtruyvấn.
+db-tests.test.js Testtựđộngtầngdatabase,APIvàsecurity.
+performance.sql TruyvấnEXPLAIN ANALYZE,tạoindexvàsosánh.
+REPORT.md Báocáolỗi,hiệunăngvànhậtkýthaotácMCP.
+TíchhợpAI/MCP
+Sửdụng@modelcontextprotocol/server-postgresđểhỗtrợliệtkêbảng,khóangoại,con-
+straints,trigger,function,storedprocedurevàđọcEXPLAIN ANALYZE.PhảnhồiAIchỉlàdữ
+liệuhỗtrợ;sinhviênphảikiểmchứngbằngSQLhoặctesttựđộng.
+Phạmvi
+Bàilabbaophủ7khíacạnh: Schema,Functional,Trigger,StoredProcedure,Function,
+PerformancevàSecurity
+2. Cấu trúc cơ sở dữ liệu và đối tượng kiểm thử
+SchemaPostgreSQLbanđầu
+CREATE TABLE users (
+id SERIAL PRIMARY KEY,
+email VARCHAR(255) UNIQUE NOT NULL,
+role VARCHAR(20) DEFAULT 'customer'
+);
+CREATE TABLE products (
+id SERIAL PRIMARY KEY,
+1
+
+--- PAGE BREAK ---
+
+MINILAB·DATABASETESTING POSTGRESQL+AI/MCP
+name VARCHAR(255) NOT NULL,
+price NUMERIC(10, 2) NOT NULL,
+stock INT DEFAULT 0 CHECK (stock >= 0)
+);
+CREATE TABLE coupons (
+id SERIAL PRIMARY KEY,
+code VARCHAR(50) UNIQUE NOT NULL,
+discount_type VARCHAR(20)
+CHECK (discount_type IN ('percent', 'fixed')) NOT NULL,
+discount_value NUMERIC(10, 2) NOT NULL,
+expired_at TIMESTAMP NOT NULL,
+is_active INT DEFAULT 1
+);
+CREATE TABLE orders (
+id SERIAL PRIMARY KEY,
+user_id INT REFERENCES users(id) ON DELETE CASCADE,
+total_amount NUMERIC(10, 2) NOT NULL,
+final_amount NUMERIC(10, 2) NOT NULL,
+status VARCHAR(20)
+CHECK (status IN
+('pending', 'confirmed', 'shipping', 'delivered', 'canceled'))
+DEFAULT 'pending'
+);
+2.1. Các đối tượng chứa lỗi logic cần phát hiện
+Lỗilogiccầnpháthiện
+1. fn_calculate_discount(type, value, order_amount): hàm tính mức giảm giá có thể
+vượttổngđơnhàng.
+2. sp_process_checkout(...): thủtụccónguycơkhôngrollbacktoànbộkhihếthàng.
+3. trg_prevent_negative_stock: cầnxácminhthựcsựchặncậpnhậttồnkhoâm.
+3. Quy trình thực hiện
+1·MCP 2·TestData 3·DBTests 4·API/Security 5·Performance
+3.1. Bước 1 — Phân tích schema qua MCP Database Server
+1. KếtnốiAIAgentvớiPostgreSQLquaMCPDatabaseServer.
+2. Tríchxuấtbảng,khóangoại,constraints,trigger,functionvàstoredprocedure.
+3. GhipromptvàtómtắtphảnhồivàoREPORT.md.
+2
+
+--- PAGE BREAK ---
+
+MINILAB·DATABASETESTING POSTGRESQL+AI/MCP
+Promptgợiý
+“Liệtkêdanhsáchbảng,khóangoại,ràngbuộc,trigger,functionvàstoredproceduretrong
+schemahiệntại. Vớimỗiđốitượng,nêutên,bảngliênquanvàmụcđíchchính.”
+3.2. Bước 2 — Khởi tạo dữ liệu kiểm thử tối thiểu
+Bảng Sốlượng Yêucầu
+users 5 Emailduynhất;rolephùhợpchotestRBAC.
+products 5 Cósảnphẩmcònhàngvàítnhấtmộtsảnphẩm
+hếthàng.
+orders Khoảng200 Liênkếtngẫunhiênvớiuser_id.
+coupons 4 CP_OK,CP_EXPIRED,CP_INACTIVE,CP_PERCENT150.
+3.3. Bước 3 — Kiểm thử tầng Database
+Tệp: db-tests.test.js
+Function,Trigger,StoredProcedurevàConstraint
+// 1. Function Testing
+it('không cho phép giá trị giảm giá vượt quá 100%', async () => {
+const r = await db.query(
+`SELECT fn_calculate_discount('percent', 150, 200) AS d`
+);
+expect(Number(r.rows[0].d)).toBeLessThanOrEqual(200);
+});
+// 2. Trigger Testing
+it('chặn cập nhật làm stock âm', async () => {
+await expect(
+db.query(`UPDATE products SET stock = -5 WHERE id = 1`)
+).rejects.toThrow();
+});
+// 3. Stored Procedure Testing (Atomicity)
+it('rollback khi có sản phẩm hết hàng trong đơn', async () => {
+const before = await db.query(`SELECT stock FROM products WHERE id = 1`);
+await expect(
+sp_process_checkout(userId, [1, 2, outOfStockId])
+).rejects.toThrow();
+const after = await db.query(`SELECT stock FROM products WHERE id = 1`);
+expect(after.rows[0].stock).toBe(before.rows[0].stock);
+});
+// 4. Schema / Constraint Testing
+it('từ chối email trùng UNIQUE', async () => {
+await db.query(`INSERT INTO users(email) VALUES ('a@x.com')`);
+await expect(
+db.query(`INSERT INTO users(email) VALUES ('a@x.com')`)
+).rejects.toThrow();
+});
+3
+
+--- PAGE BREAK ---
+
+MINILAB·DATABASETESTING POSTGRESQL+AI/MCP
+Atomicitycầnchứngminh
+Saulỗi,tồnkhocủamọisảnphẩmđãxửlýphảitrởvềgiátrịbanđầuvàkhôngcóđơn
+hàngdởdang. Đâylàkiểmthửtínhnguyêntửcủatransaction.
+3.4. Bước 4 — Kiểm thử API và bảo mật
+FunctionalAPI,SQLInjectionvàRBAC
+it('từ chối coupon hết hạn', async () => {
+const res = await request(app).post('/api/apply-coupon')
+.send({ code: 'CP_EXPIRED', order_amount: 300 });
+expect(res.status).toBe(400);
+});
+it('chặn canceled chuyển sang delivered', async () => {
+const res = await request(app)
+.put(`/api/admin/orders/${canceledOrderId}/status`)
+.send({ status: 'delivered' });
+expect(res.status).toBe(400);
+});
+it('API tìm kiếm chống SQL Injection', async () => {
+const res = await request(app)
+.get(`/api/products/search?q=' OR '1'='1`);
+expect(res.status).not.toBe(500);
+const count = await db.query(`SELECT COUNT(*) FROM products`);
+expect(Number(count.rows[0].count)).toBe(5);
+});
+it('app_user không có quyền DROP TABLE', async () => {
+await expect(
+appUserDb.query(`DROP TABLE products`)
+).rejects.toThrow(/permission denied/i);
+});
+Lưuý
+HTTP500khôngphảitiêuchíduynhấtchoSQLInjection. Cầnkiểmtraparameterized
+query,phạmvikếtquảtrảvềvàxácminhdữliệukhôngbịsửahoặcxóa.
+3.5. Bước 5 — Phân tích hiệu năng với EXPLAIN ANALYZE
+Tệp: performance.sql
+Đotrướcvàsaukhitạoindex
+-- 1. Đo trước khi tạo index
+EXPLAIN (ANALYZE, BUFFERS)
+SELECT user_id, SUM(final_amount)
+FROM orders
+GROUP BY user_id
+ORDER BY SUM(final_amount) DESC;
+-- 2. Tạo index và cập nhật thống kê
+CREATE INDEX idx_orders_user_id ON orders(user_id);
+ANALYZE orders;
+4
+
+--- PAGE BREAK ---
+
+MINILAB·DATABASETESTING POSTGRESQL+AI/MCP
+-- 3. Đo lại sau khi tạo index
+EXPLAIN (ANALYZE, BUFFERS)
+SELECT user_id, SUM(final_amount)
+FROM orders
+GROUP BY user_id
+ORDER BY SUM(final_amount) DESC;
+Diễngiảikếtquả
+Vớikhoảng200bảnghivàtruyvấntổnghợptoànbảng,PostgreSQLcóthểvẫnchọnSeq
+Scan sau khi tạo index. Đây không nhất thiết là lỗi. Báo cáo phải ghi kế hoạch thực tế,
+Execution Time,buffersvàgiảithíchlựachọncủaplanner.
+4. Bảng tổng hợp 7 khía cạnh kiểm thử
+Khíacạnh Kịchbảnrútgọn Côngcụ
+Schema ViphạmUNIQUEtrênemail. Jest+DBClient
+Functional Couponhếthạn;chuyểntrạngtháisai. Jest+Supertest
+Trigger Cậpnhậttồnkhothànhsốâm. Jest+DBClient
+Stored Tínhnguyêntửvàrollbackkhihếthàng. Jest+DBClient
+Procedure
+Function Chiếtkhấuvượtquá100%. SQL/Jest
+Security SQLInjectionvàRBAC. Jest+Supertest
+Performance Sosánhkếhoạchtrước/sauindex. SQL+MCPServer
+5. Cấu trúc báo cáo REPORT.md
+Mẫubáocáo
+# BÁO CÁO KẾT QUẢ KIỂM THỬ
+## 1. Tổng quan Test Run
+- Môi trường:
+- Tổng số test / Pass / Fail:
+## 2. Danh sách Lỗi Phát hiện
+1. **fn_calculate_discount**
+- Expected / Actual / Root cause / Fix đề xuất
+2. **sp_process_checkout**
+- Dữ liệu trước và sau transaction
+3. **trg_prevent_negative_stock**: [Đạt / Không đạt]
+## 3. Kết quả Hiệu năng
+- Trước index: X ms; Scan: ...; Buffers: ...
+- Sau index: Y ms; Scan: ...; Buffers: ...
+- Nhận xét về PostgreSQL planner:
+5
+
+--- PAGE BREAK ---
+
+MINILAB·DATABASETESTING POSTGRESQL+AI/MCP
+## 4. Nhật ký MCP
+- Prompt: "Liệt kê bảng, khóa ngoại, trigger, function, stored procedure."
+- Tóm tắt phản hồi:
+- Cách kiểm chứng:
+## 5. Kết luận và Khuyến nghị
+Yêucầubằngchứng
+Mỗilỗicầncóinput,expectedresult,actualresult,testcasevàrootcause. Báocáophải
+phânbiệtnộidungAIđềxuấtvớikếtluậnđãđượcsinhviênkiểmchứng.
+6. Tiêu chí đánh giá và trọng số
+Tiêuchí Trọngsố
+DBUnitTesting: Function/Trigger/StoredProcedure/ 40%
+Schema
+Functional&SecurityTesting: API/SQLi/RBAC 25%
+PerformanceTesting: EXPLAIN ANALYZEvàindex 15%
+TíchhợpMCPvànhậtkýphântích 10%
+TrìnhbàyREPORT.md 10%
+Tổngcộng 100%
+7. Checklist trước khi nộp
+Đầura
+• db-tests.test.jschạyđượcvàcóassertionrõràng.
+• performance.sqlcóphépđotrước/sauindex.
+• REPORT.mdcóPass/Fail,bugs,hiệunăngvàMCPLog.
+• Testthayđổidữliệucósetup/cleanuphoặcrollback.
+• Khôngđưapasswordhoặcconnectionstringnhạycảmvàobàinộp.
+• KếtluậnAI/MCPđãđượcđốichiếuvớikếtquảthựcthi.
+Cấutrúcthưmụcnộpbài
+STUDENT_ID_MINILAB_POSTGRES/
+├── db-tests.test.js
+├── performance.sql
+└── REPORT.md
+6
+
+--- PAGE BREAK ---
+
+MINILAB·DATABASETESTING POSTGRESQL+AI/MCP
+—Hếtđề—
+Dùngtestđểtạoartifacts;dùngAIđểhỗtrợphântích;dùngdữliệuđểkếtluận.
+7
+
+--- PAGE BREAK ---
+

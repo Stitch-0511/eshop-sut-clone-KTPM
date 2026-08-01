@@ -1,0 +1,14 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom CSS to simulate UI bugs */
+.bug-overflow {
+  white-space: nowrap;
+}
+
+.bug-mobile-hidden {
+  @media (max-width: 640px) {
+    margin-right: -100px;
+  }
+}

@@ -1,0 +1,10 @@
+[
+  {
+    "id": "FR05-TC001",
+    "action": "verifyPageLoad",
+    "description": "Trang chu hien thi danh sach san pham dang luoi voi h1 dung",
+    "expectedH1Count": 1,
+    "expectedH1Text": "Danh sách sản phẩm",
+    "expectedGridVisible": true
+  }
+]
