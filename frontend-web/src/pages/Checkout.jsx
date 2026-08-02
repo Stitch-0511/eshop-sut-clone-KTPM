@@ -25,7 +25,7 @@ export default function Checkout() {
     setCouponResult(null);
     setApplyingCoupon(true);
     try {
-      const res = await axios.post('http://localhost:3000/api/apply-coupon', {
+      const res = await axios.post('https://eshop-sut-clone-ktpm.onrender.com/api/apply-coupon', {
         code: couponCode.trim().toUpperCase(),
         total_amount: editableTotal,
         user_id: user?.id || null
@@ -42,7 +42,7 @@ export default function Checkout() {
     try {
       const finalAmount = couponResult ? couponResult.final_amount : editableTotal;
 
-      await axios.post('http://localhost:3000/api/checkout', {
+      await axios.post('https://eshop-sut-clone-ktpm.onrender.com/api/checkout', {
         items: cart,
         total_amount: finalAmount,
         coupon_id: couponResult?.coupon_id || null
@@ -52,7 +52,7 @@ export default function Checkout() {
 
       // Record coupon usage if applied
       if (couponResult?.coupon_id && token) {
-        await axios.post('http://localhost:3000/api/coupon-usage',
+        await axios.post('https://eshop-sut-clone-ktpm.onrender.com/api/coupon-usage',
           { coupon_id: couponResult.coupon_id },
           { headers: { Authorization: `Bearer ${token}` } }
         );

@@ -20,7 +20,7 @@ export default function Register() {
     }
 
     try {
-      await axios.post('http://localhost:3000/api/register', { name, email, password });
+      await axios.post('https://eshop-sut-clone-ktpm.onrender.com/api/register', { name, email, password });
       navigate('/login');
     } catch (err) {
       setError(err.response?.data?.error || 'Đăng ký thất bại.');

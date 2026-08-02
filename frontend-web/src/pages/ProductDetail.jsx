@@ -13,7 +13,7 @@ export default function ProductDetail() {
 
   useEffect(() => {
     axios
-      .get(`http://localhost:3000/api/products/${id}`)
+      .get(`https://eshop-sut-clone-ktpm.onrender.com/api/products/${id}`)
       .then((res) => setProduct(res.data))
       .catch((err) => console.error(err));
   }, [id]);
