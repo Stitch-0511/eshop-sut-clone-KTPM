@@ -3,7 +3,7 @@
     "id": "TC1",
     "description": "Lay danh sach san pham mac dinh",
     "query": "",
-    "expected_status": 999
+    "expected_status": 200
   },
   {
     "id": "TC2",
