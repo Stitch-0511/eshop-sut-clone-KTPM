@@ -1,0 +1,51 @@
+name: Newman API Test - GET /api/products
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+
+jobs:
+  api-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install backend dependencies
+        working-directory: backend
+        run: npm install
+
+      - name: Install Newman globally
+        run: npm install -g newman
+
+      - name: Start backend server
+        working-directory: backend
+        run: npm run dev &
+
+      - name: Wait for server ready
+        run: npx wait-on http://localhost:3000/api/products/1 --timeout 30000
+
+      - name: Run Newman tests
+        run: |
+          newman run mini-products.postman_collection.json \
+            -e mini-local.postman_environment.json \
+            -d mini-products.data.json \
+            -r cli,json \
+            --reporter-json-export mini-newman-report.json
+
+      - name: Upload Newman report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: newman-report
+          path: mini-newman-report.json
+          retention-days: 7

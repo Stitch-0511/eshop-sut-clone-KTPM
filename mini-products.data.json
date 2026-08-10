@@ -1,0 +1,32 @@
+[
+  {
+    "id": "TC1",
+    "description": "Lay danh sach san pham mac dinh",
+    "query": "",
+    "expected_status": 200
+  },
+  {
+    "id": "TC2",
+    "description": "Tim kiem san pham ton tai - iPhone",
+    "query": "?search=iPhone",
+    "expected_status": 200
+  },
+  {
+    "id": "TC3",
+    "description": "Tim kiem san pham khong ton tai",
+    "query": "?search=nonexistingproduct123",
+    "expected_status": 200
+  },
+  {
+    "id": "TC4",
+    "description": "Phan trang san pham page=1 limit=2",
+    "query": "?page=1&limit=2",
+    "expected_status": 200
+  },
+  {
+    "id": "TC5",
+    "description": "SQL Injection test - search param",
+    "query": "?search=' OR '1'='1",
+    "expected_status": 200
+  }
+]

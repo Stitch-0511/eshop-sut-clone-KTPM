@@ -1,0 +1,66 @@
+{
+  "id": "mini-exercise-products",
+  "name": "Mini Exercise - GET /api/products",
+  "description": "Test suite cho API GET /api/products voi data-driven 5 test cases",
+  "_postman_id": "mini-exercise-products-collection",
+  "variables": [],
+  "item": [
+    {
+      "id": "get-products-request",
+      "name": "GET /api/products",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/products{{query}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "products"],
+          "query": []
+        },
+        "description": "Lay danh sach san pham voi cac tham so tim kiem va phan trang"
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "pm.request.headers.upsert({",
+              "    key: \"X-Student-Id\",",
+              "    value: pm.environment.get(\"studentId\")",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "// Check status code",
+              "pm.test(\"Status code is \" + pm.iterationData.get(\"expected_status\"), function () {",
+              "    pm.response.to.have.status(pm.iterationData.get(\"expected_status\"));",
+              "});",
+              "",
+              "// Check Content-Type",
+              "pm.test(\"Content-Type is application/json\", function () {",
+              "    pm.response.to.have.header(\"Content-Type\");",
+              "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");",
+              "});",
+              "",
+              "// Check response time < 500ms",
+              "pm.test(\"Response time is less than 500ms\", function () {",
+              "    pm.expect(pm.response.responseTime).to.be.below(500);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    }
+  ],
+  "auth": {
+    "type": "noauth"
+  },
+  "event": []
+}
