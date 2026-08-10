@@ -23,13 +23,13 @@ jobs:
       run: |
         cd backend
         npm install
-        npm install -g newman wait-on
+        npm install -g newman wait-port
 
     - name: Start Backend Provider
       run: |
         cd backend
         npm run dev &
-        npx wait-on http://127.0.0.1:3000 --timeout 60000 || sleep 10
+        wait-port 3000 --timeout 60000
 
     - name: Run Newman Tests
       run: |
