@@ -19,24 +19,28 @@ jobs:
       with:
         node-version: '20'
 
-    - name: Install dependencies & Newman
-      run: |
-        cd backend
-        npm install
-        npm install -g newman wait-port
+    - name: Install backend dependencies
+      working-directory: backend
+      run: npm install
 
-    - name: Start Backend Provider
-      run: |
-        cd backend
-        npm run dev &
-        npx wait-port 3000 --timeout 60000
+    - name: Install Newman & wait-port
+      run: npm install -g newman wait-port
+
+    - name: Start Backend Server
+      working-directory: backend
+      run: node server.js &
+      env:
+        PORT: 3000
+
+    - name: Wait for Server Ready
+      run: npx wait-port 3000 --timeout 60000
 
     - name: Run Newman Tests
       run: |
         newman run mini-products.postman_collection.json \
           -e mini-local.postman_environment.json \
           -d mini-products.data.json \
-          -r "cli,json" \
+          -r cli,json \
           --reporter-json-export mini-newman-report.json
 
     - name: Upload Test Report
